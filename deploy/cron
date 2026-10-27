@@ -1,0 +1,4 @@
+# /etc/cron.d/coliving-monitor  -  daily catalogue pull and report, 06:10 UTC (00:10 Mexico City)
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+10 6 * * * root cd /opt/coliving-monitor && set -a && . ./.env && set +a && /usr/bin/node src/run.js >> /var/log/coliving-monitor.log 2>&1

@@ -1,0 +1,14 @@
+{
+  "name": "coliving-monitor",
+  "version": "0.1.0",
+  "description": "Daily supply and listing-health monitor for Coliving.com, built on its public MCP server. No dependencies.",
+  "main": "src/run.js",
+  "scripts": {
+    "run": "node src/run.js",
+    "report": "node src/run.js --offline --no-publish",
+    "test": "node test/smoke.js"
+  },
+  "engines": { "node": ">=20" },
+  "license": "MIT",
+  "author": "Laurens Borrey"
+}
