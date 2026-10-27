@@ -22,6 +22,17 @@ const { diff } = require('./diff');
 const { render } = require('./report');
 
 const ROOT = path.resolve(__dirname, '..');
+// A plain .env next to package.json (KEY=VALUE, optional quotes) fills process.env without a shell:
+// WordPress application passwords contain spaces, which `. .env` in cron cannot carry.
+(() => {
+  const f = path.join(ROOT, '.env');
+  if (!fs.existsSync(f)) return;
+  for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+    if (!m || process.env[m[1]] !== undefined) continue;
+    process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
+  }
+})();
 const DATA = process.env.DATA_DIR || path.join(ROOT, 'data');
 const OUT = process.env.OUT_DIR || path.join(ROOT, 'out');
 const SNAP = path.join(DATA, 'snapshots');
