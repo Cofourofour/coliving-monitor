@@ -22,6 +22,15 @@ const CSS = `
 .csm em.sig{font-family:'Playfair Display',Georgia,serif;font-style:italic;font-weight:400}
 .csm .crumb{font-size:14px;color:var(--muted);margin-bottom:18px}
 .csm .crumb a{color:var(--muted);text-decoration:none}
+.csm .apply{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border-radius:18px;padding:16px 20px;margin:0 0 26px;font-size:15px;line-height:1.55}
+.csm .apply .dot{margin-top:7px;flex:none}
+.csm .apply b{color:var(--ink);font-weight:600}
+.csm .apply a{color:var(--ink);text-decoration:underline;text-decoration-color:rgba(24,24,27,.3);text-underline-offset:3px;white-space:nowrap}
+.csm .next{background:var(--panel);border-radius:28px;padding:28px;margin-top:22px}
+.csm .next h3{margin-bottom:8px}
+.csm .next p{margin:0 0 10px;font-size:15px}
+.csm .next ol{margin:8px 0 0 18px;padding:0;font-size:15px}
+.csm .next li{margin:0 0 6px}
 .csm .lede{font-size:18px;max-width:760px;margin:0 0 22px}
 .csm .pills{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 36px}
 .csm .pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:9px 16px;font-size:14px;font-weight:500;text-decoration:none;border:1px solid rgba(24,24,27,.12);color:var(--ink);background:#fff}
@@ -128,7 +137,18 @@ function healthBlock(d) {
     ${h.worst.map((s) => `<tr><td><a class="lk" href="${esc(s.url)}">${esc(s.name)}</a></td><td class="m">${esc(s.city)}</td><td class="r">${usd(s.price_usd)}</td><td class="r">${num(s.review_count)}</td><td>${s.issues.map((i) => `<span class="tag${/^price_/.test(i.key) ? ' bad' : ''}">${esc(i.label)}</span>`).join('')}</td></tr>`).join('')}
   </table></div>
   <p class="muted">Source fields: review_count, card_community_events, card_amenities, download_speed, summary, trust_signals, neighborhood, location, minimum_stay_months, rating, monthly_price_from against the city median (cities with five or more listings).</p>
-  </details>`;
+  </details>
+  <div class="next">
+    <h3>From nudge to done: write it for the host, let them approve it.</h3>
+    <p>Most hosts never act on a nudge. Not because they disagree, because writing a summary, listing the events, filling in the WiFi speed is work they keep postponing. The step after the nudge is to do that work for them and ask only for a yes.</p>
+    <ol>
+      <li>For every listing with an open fix, the system drafts the missing piece from what it already knows: the listing's own photos, amenities, reviews and the host's other listings. A summary, an events list, a plain answer on deposit and cancellation.</li>
+      <li>The host gets the draft as a recommendation, in the host dashboard or by email: publish as is, edit, or decline. One click. Nothing goes live without the host.</li>
+      <li>No answer after the nudge and the draft? A second, shorter reminder, then the supply team sees who is still silent, ranked by how much the listing would gain.</li>
+    </ol>
+    <p>Why it pays: a complete profile with reviews, events and trust signals converts better than a half-empty card, and Coliving.com earns on every booking. When the hosts do well, Coliving.com does well. The hosts' own interests and the platform's point the same way; the only thing missing is someone doing the typing.</p>
+    <p class="muted">This part is not built: it needs host-scoped access and your team's sign-off on what the drafts may say. The monitor above is what makes it possible, because it already knows, per listing, what is missing.</p>
+  </div>`;
 }
 
 function marketsBlock(d) {
@@ -159,13 +179,14 @@ function render(d) {
   return `${CSS}
 <div class="csm"><div class="wrap">
   <div class="crumb"><a href="https://laurensborrey.com/">Laurens Borrey</a> / Coliving.com Supply Monitor</div>
+  <div class="apply"><span class="dot"></span><span><b>This is my application for the AI Automation &amp; Systems Generalist role.</b> Rather than describe what I would automate at Coliving.com, I built it on your own MCP server before writing to you. It has run every morning since 27 October. <a href="https://laurensborrey.com/coliving-ai-automation/">The application itself, with your requirements mapped line by line ↗</a></span></div>
   <h1>Your catalogue, read every morning <em class="sig">through your own MCP server.</em></h1>
   <p class="lede">A daily job pulls every published listing from mcp.coliving.com, the public door Coliving.com built for AI assistants, and turns it into the three things a supply team acts on: what is broken for the assistants, what changed since yesterday, and which listings need a host nudge. Read-only, no login, no scraping of the website.</p>
   <div class="pills">
     <span class="pill"><span class="dot"></span>Snapshot ${esc(dateLong(d.snapshot_date))}</span>
     <span class="pill">${num(d.history.length)} day${d.history.length === 1 ? '' : 's'} of history</span>
     <a class="pill" href="https://github.com/Cofourofour/coliving-monitor">Code on GitHub ↗</a>
-    <a class="pill dark" href="https://laurensborrey.com/coliving-ai-automation/">Why I built it ↗</a>
+    <a class="pill dark" href="https://laurensborrey.com/coliving-ai-automation/">My application ↗</a>
   </div>
   <div class="stats">
     <div class="stat"><b>${num(t.listings)}</b><span>listings</span><small>${d.reach.by_country != null ? 'found country by country' : 'server reports ' + num(d.reach.reported_total)}</small></div>
