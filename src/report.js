@@ -179,7 +179,7 @@ function render(d) {
   return `${CSS}
 <div class="csm"><div class="wrap">
   <div class="crumb"><a href="https://laurensborrey.com/">Laurens Borrey</a> / Coliving.com Supply Monitor</div>
-  <div class="apply"><span class="dot"></span><span><b>This is my application for the AI Automation &amp; Systems Generalist role.</b> Rather than describe what I would automate at Coliving.com, I built it on your own MCP server before writing to you. It has run every morning since 27 October. <a href="https://laurensborrey.com/coliving-ai-automation/">The application itself, with your requirements mapped line by line ↗</a></span></div>
+  <div class="apply"><span class="dot"></span><span><b>This is my application for the AI Automation &amp; Systems Generalist role.</b> Rather than describe what I would automate at Coliving.com, I built it on your own MCP server before writing to you. It has run every morning since 27 October. It is one example of what I can do from the outside, with public data only; inside Coliving.com, with access to hosts, bookings and support, far more is possible. <a href="https://laurensborrey.com/coliving-ai-automation/">The application itself, with your requirements mapped line by line ↗</a></span></div>
   <h1>Your catalogue, read every morning <em class="sig">through your own MCP server.</em></h1>
   <p class="lede">A daily job pulls every published listing from mcp.coliving.com, the public door Coliving.com built for AI assistants, and turns it into the three things a supply team acts on: what is broken for the assistants, what changed since yesterday, and which listings need a host nudge. Read-only, no login, no scraping of the website.</p>
   <div class="pills">
