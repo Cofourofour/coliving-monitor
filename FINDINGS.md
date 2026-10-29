@@ -21,6 +21,12 @@ carry the listing's own currency. The website shows the same number in USD.
 | [yqttezmi](https://coliving.com/spaces/yqttezmi) | Toronto | From C$1,160.54/mo | $1,161 |
 | [iplmnxt6](https://coliving.com/spaces/iplmnxt6) | Singapore | From SGD 2,266.25/mo | $2,267 |
 
+Re-verified 28 October with the website's own currency switcher, which removes any doubt about
+which side is wrong: listing rgxjdwme shows "From $1,266 /month" in USD and "From COP 3,969,014 /month"
+in COP on coliving.com, while the MCP's `get_listing` says "from COP 1,052.48/month" and the search
+card says "From COP 1,265.16/mo" with `source_currency: COP`. Listing dzusso03 shows "From $926 /month"
+in USD and "From MX$17,290 /month" in MXN; the MCP says "from MXN 881.55/month".
+
 `currency_conversion_applied` is `false` on every card. On the 27 October snapshot 672 of the 1,000
 reachable listings have a non-USD `source_currency`, so every assistant answer about one of them quotes
 a wrong price: absurd for COP/MXN/JPY/HKD, quietly 5–30% off for EUR/GBP/CAD/SGD.
@@ -49,11 +55,17 @@ are absent from the unfiltered 1,000. The monitor therefore pulls the catalogue 
   reports 1 listing while the Portugal country location reports 45.
 - `search_listings` with a free-text `query` ("Lisbon") does not filter by place: it returns the whole
   catalogue (`total_results` 1142, `location_display` null). Only `location` / `location_id` filter.
-- Island regions are not children of their country in the location tree. Pulling the 65 countries that
-  resolve gave 1,103 listings; the 39 others sit in Bali (Kuta, Ubud, Canggu, Berawa, Pererenan, Dalung:
-  not under Indonesia, which reports 4), Tenerife and Ibiza and Mallorca (not under Spain), Madeira
-  (Funchal, Santo da Serra: not under Portugal), Sicily and Sardinia (not under Italy), Curaçao, Réunion,
-  plus 4 listings with no location at all. "Coliving in Indonesia" through the MCP misses Bali.
+- Island places are not children of their country in the location tree. Pulling the 65 countries that
+  resolve gave 1,103 of 1,142 listings on 27 October; the rest sit under places no country search
+  reaches, plus 4 listings with no location at all. Verified live on 28 October with `search_locations`
+  and `search_listings(location_id=…)`:
+  - "Bali, Indonesia" (id 250) returns 0 listings; "Ubud, Bali" (id 3001) alone holds 2; "Indonesia"
+    (id 102) returns 4 (Badung, Denpasar, Maluk), none of them Ubud.
+  - "Santa Cruz de Tenerife" (id 334) holds 3; the 151 listings under "Spain" (id 205) include no
+    Tenerife place (43 distinct cities, none on Tenerife).
+  - "Funchal, Madeira" (id 2925) holds 4; the 45 under "Portugal" (id 174) include no Funchal.
+  - "Catania, Sicily" (id 513) holds 2; the 36 under "Italy" (id 107) include Palermo but not Catania.
+  Not claimed: Ibiza and Mallorca resolve to locations with 0 listings; Palma is under Spain.
 
 ## 4. Smaller things seen on the way
 
