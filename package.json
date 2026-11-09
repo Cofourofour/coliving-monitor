@@ -6,7 +6,7 @@
   "scripts": {
     "run": "node src/run.js",
     "report": "node src/run.js --offline --no-publish",
-    "test": "node test/smoke.js"
+    "test": "node test/smoke.js && node test/mcp.js"
   },
   "engines": { "node": ">=20" },
   "license": "MIT",

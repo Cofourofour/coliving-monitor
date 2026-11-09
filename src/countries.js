@@ -1,5 +1,5 @@
-// Country discovery. The MCP has no "list locations" tool and listing cards carry country: null, so the
-// countries that hold listings are found once by resolving a static list of country names through
+// Country discovery. The MCP has no "list locations" tool (and cards carried country: null until
+// 30 Oct 2026), so the countries that hold listings are found once by resolving a static list of country names through
 // search_locations and keeping the ones with listings. Cached in data/countries.json; refreshed when
 // older than a week or when run with --refresh-countries.
 'use strict';
@@ -17,6 +17,7 @@ const FILE = () => path.join(process.env.DATA_DIR || path.join(__dirname, '..', 
 
 async function discover(log = () => {}) {
   const found = [];
+  const failed = [];
   for (const name of NAMES) {
     try {
       const r = await call('search_locations', { query: name });
@@ -27,8 +28,10 @@ async function discover(log = () => {}) {
         || locs.find((l) => l.name.toLowerCase().startsWith(name.toLowerCase() + ',') && l.listings_count > 0)
         || locs.find((l) => l.type === 'country' && l.listings_count > 0);
       if (c && c.listings_count > 0) found.push({ name: c.name, location_id: c.location_id, listings_count: c.listings_count });
-    } catch (e) { log(`country ${name}: ${e.message.slice(0, 80)}`); }
+    } catch (e) { failed.push(name); log(`country ${name}: ${e.message.slice(0, 160)}`); }
   }
+  // A lookup that failed is not "no listings there": never cache a partial country list.
+  if (failed.length) throw new Error(`country discovery failed for ${failed.length} name(s): ${failed.slice(0, 5).join(', ')}`);
   // One entry per location_id (two names can resolve to the same place).
   const seen = new Set();
   const unique = found.filter((c) => { if (seen.has(c.location_id)) return false; seen.add(c.location_id); return true; });

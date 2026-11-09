@@ -1,10 +1,60 @@
-# Findings on mcp.coliving.com, verified 27 October 2026
+# Findings on mcp.coliving.com
 
-Everything below was read through the public discovery tools of the Coliving.com MCP server
-(`https://mcp.coliving.com/mcp`, no token) and checked by hand against the public website. Listing IDs
-are the public `unique_id` values; every link is a public listing page.
+First verified 27 October 2026; status re-checked live on 9 November 2026 (03:54-04:03 UTC pull, two
+full runs with identical counts). Everything was read through the public discovery tools of the
+Coliving.com MCP server (`https://mcp.coliving.com/mcp`, no token). Listing IDs are the public
+`unique_id` values; every link is a public listing page.
 
-## 1. Non-USD listings return USD amounts under the local currency label
+## Status on 9 November 2026
+
+| # | Defect (27 Oct) | Status | Last seen | First seen fixed | Today |
+|---|---|---|---|---|---|
+| 1 | USD amounts under local currency labels | Fixed upstream | 29 Oct pull | 30 Oct pull | 0 of 2,067 cards carry a non-USD label |
+| 2 | Unfiltered search stops at 1,000 items | Fixed upstream | 29 Oct pull | 30 Oct pull | default scope: reported 1,242, walk returned 1,242; all_published: reported 2,067, returned 2,067 |
+| 3a | `country` empty on the cards | Fixed upstream | 3 Nov pull (3 cards; 1,146 of 1,147 on 29 Oct) | 4 Nov pull | 0 of 2,067 cards |
+| 3b | Cards with no city | Fixed upstream | 3 Nov pull (3 cards) | 4 Nov pull | 0 cards |
+| 3c | Island places outside their country | Fixed upstream | 3 Nov pull | 4 Nov pull | Indonesia returns Ubud (2), Spain returns Tenerife (4), Portugal returns Funchal (4), Italy returns Catania (2) |
+| 3d | Free-text `query: "Lisbon"` returns the whole catalogue | Changed | | | now reports 120 results (Cascais, Ericeira, Coimbra, ...), not the catalogue |
+| 4 | `get_host` shows "Response Rate: 0%, Average Response Time: 0 hours" for The Baixa (yfkkibzf, 58 reviews) | Open | 9 Nov | | unchanged |
+
+"Pull" dates are the monitor's daily 06:10 UTC snapshots (`data/snapshots/`), so a fix happened between
+the last-seen and first-seen-fixed pulls. The generated page recomputes every status from each day's pull.
+
+## Two catalogues: `availability_scope`
+
+`search_listings` takes `availability_scope`: `available_soon` (the default: "without dates, available
+within 30 days") or `all_published` ("every indexed published listing regardless of availability date").
+On 9 November the default scope holds 1,242 listings and `all_published` 2,067; every default-scope
+listing is also in `all_published`. `search_locations` `listings_count` follows the default scope
+(New York City reports 141 against 140 in the default scope and 304 published; Paris 56 against 56 and
+188).
+
+The 1,142 listings reported on 27 October, and every daily total on the page until 8 November, were the
+default scope, not the whole published catalogue. From 9 November the monitor pulls both scopes, keeps
+all published listings in its snapshot with an `in_default_scope` flag, and reports both.
+
+## What the daily page got wrong before 9 November
+
+- **Not affected by the rate limit.** The server allows 60 requests a minute and answers an over-limit
+  request with HTTP 429 `{"message":"Too Many Attempts."}`, which the old client read as an empty page.
+  The monitor paced at 1.1 s from its first commit (never 0.4 s), and every one of the 13 daily snapshots
+  from 27 Oct to 8 Nov shows each country walk returning exactly the number the server reported, and the
+  unfiltered walk returning the server's total from 30 Oct on. The client now treats 429, empty and
+  non-JSON replies as errors, honours Retry-After, retries with backoff and paces at 50 a minute.
+- **"Listings gone" counted listings leaving the 30-day window.** 97 of the 106 listings the page called
+  gone between 28 Oct and 8 Nov are still published on 9 Nov.
+- **"Availability changes" counted the date roll.** `available_from` on an "available now" listing is the
+  pull date, so 784 to 995 listings a day "changed" without changing.
+- **"Price changes" counted conversion drift.** Any move of $1 or more counted; on 6 and 7 Nov the page
+  showed 817 and 810 price changes, of which 168 and 8 were 2% or more. The threshold is now 2%.
+- **Fixed defects were still shown as open.** From 30 Oct the page kept describing the currency label
+  and the 1,000 cap as live (next to its own counts of 0), and from 4 Nov the country and island
+  findings; it also said each finding was "verified by hand against the website" on that day's date,
+  which was only true on 27-28 Oct.
+
+## History: the findings as verified on 27-28 October 2026
+
+### 1. Non-USD listings return USD amounts under the local currency label (fixed, first seen fixed 30 Oct)
 
 `search_listings`, `get_listing` and `check_availability` all return `monthly_price_from` /
 "Monthly price" as a USD amount, while `source_currency`, `display_currency` and the display string
@@ -31,10 +81,10 @@ in USD and "From MX$17,290 /month" in MXN; the MCP says "from MXN 881.55/month".
 reachable listings have a non-USD `source_currency`, so every assistant answer about one of them quotes
 a wrong price: absurd for COP/MXN/JPY/HKD, quietly 5–30% off for EUR/GBP/CAD/SGD.
 
-Effect on this monitor: all prices are treated as USD, which makes cities comparable. If the label is
-fixed upstream the numbers will change currency and `health.js` will need a real FX step.
+Effect on this monitor: prices were always USD amounts, so city comparisons were never affected; since
+the fix the label says USD too.
 
-## 2. The unfiltered search stops at 1,000 items; the server reports 1,142
+### 2. The unfiltered search stops at 1,000 items; the server reports 1,142 (fixed, first seen fixed 30 Oct)
 
 `search_listings` with no place filter: `pagination.total = 1142`, `total_pages = 58` at 20 per page.
 Pages 1–50 return 20 items each; pages 51–58 return `items: []` with `has_next_page: true`. At 50 per
@@ -46,7 +96,7 @@ A place filter is not capped: `location_id` 339 (Paris) reports 52 and pages out
 are absent from the unfiltered 1,000. The monitor therefore pulls the catalogue country by country
 (`src/countries.js`, `pullByCountries` in `src/mcp.js`) and reports the difference every day.
 
-## 3. Location data
+### 3. Location data (country, city and island tree fixed, first seen fixed 4 Nov)
 
 - `country` is `null` on 999 of 1,000 cards (one card says "Portugal").
 - 4 cards have no `location` at all.
@@ -57,7 +107,8 @@ are absent from the unfiltered 1,000. The monitor therefore pulls the catalogue 
   catalogue (`total_results` 1142, `location_display` null). Only `location` / `location_id` filter.
 - Island places are not children of their country in the location tree. Pulling the 65 countries that
   resolve gave 1,103 of 1,142 listings on 27 October; the rest sit under places no country search
-  reaches, plus 4 listings with no location at all. Verified live on 28 October with `search_locations`
+  reaches, plus 4 listings with no location at all. (The 1,142 was the default availability scope; see
+  "Two catalogues" above.) Verified live on 28 October with `search_locations`
   and `search_listings(location_id=…)`:
   - "Bali, Indonesia" (id 250) returns 0 listings; "Ubud, Bali" (id 3001) alone holds 2; "Indonesia"
     (id 102) returns 4 (Badung, Denpasar, Maluk), none of them Ubud.
@@ -67,7 +118,7 @@ are absent from the unfiltered 1,000. The monitor therefore pulls the catalogue 
   - "Catania, Sicily" (id 513) holds 2; the 36 under "Italy" (id 107) include Palermo but not Catania.
   Not claimed: Ibiza and Mallorca resolve to locations with 0 listings; Palma is under Spain.
 
-## 4. Smaller things seen on the way
+### 4. Smaller things seen on the way (27 Oct; only the get_host line was re-checked, on 9 Nov)
 
 - `get_host` returns "Response Rate: 0%, Average Response Time: 0 hours" for a host with a 58-review
   listing (Baixa Residence, yfkkibzf): either unpopulated or wrong, but shown as a trust signal.
@@ -75,4 +126,5 @@ are absent from the unfiltered 1,000. The monitor therefore pulls the catalogue 
   (rgxjdwme, Essential Room: 1,052.48 vs 1,208.10): probably seasonal pricing, but a reader cannot tell.
 - 27 listings show a 5.0 rating on fewer than 3 reviews; 5 listings have reviews but a null rating.
 - `summary` is empty on 84% of cards, `download_speed` on 19%, `trust_signals` on 61%.
-- Rate limit is 60 requests a minute (`x-ratelimit-limit`); the monitor stays at one a second.
+- Rate limit is 60 requests a minute (`x-ratelimit-limit`, initialize and notifications included); an
+  over-limit request gets HTTP 429. The monitor stays at 50 a minute.
